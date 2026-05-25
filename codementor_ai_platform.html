@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+--bg:#09090b;--surface:#111113;--surface2:#18181b;--surface3:#1f1f23;
+--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
+--accent:#f97316;--accent2:#fb923c;--accent-dim:rgba(249,115,22,0.12);
+--blue:#3b82f6;--blue-dim:rgba(59,130,246,0.12);
+--green:#22c55e;--green-dim:rgba(34,197,94,0.12);
+--purple:#a855f7;--purple-dim:rgba(168,85,247,0.12);
+--red:#ef4444;--red-dim:rgba(239,68,68,0.12);
+--yellow:#eab308;--yellow-dim:rgba(234,179,8,0.12);
+--text:#fafafa;--muted:#71717a;--muted2:#52525b;
+--mono:'JetBrains Mono',monospace;--sans:'Space Grotesk',sans-serif;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;overflow-x:hidden}
+
+/* LAYOUT */
+.app{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+.sidebar{background:var(--surface);border-right:1px solid var(--border);padding:0;display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+.main{overflow-y:auto}
+
+/* SIDEBAR */
+.logo{padding:20px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.logo-icon{width:32px;height:32px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;font-family:var(--mono)}
+.logo-text{font-size:14px;font-weight:600;line-height:1.2}
+.logo-sub{font-size:11px;color:var(--muted)}
+.nav{padding:12px 8px;flex:1;overflow-y:auto}
+.nav-section{font-size:10px;color:var(--muted2);letter-spacing:1.5px;text-transform:uppercase;padding:8px 8px 4px;margin-top:8px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;font-size:13px;color:var(--muted);cursor:pointer;transition:all 0.15s;margin-bottom:2px;border:1px solid transparent}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{background:var(--accent-dim);color:var(--accent);border-color:rgba(249,115,22,0.2)}
+.nav-icon{font-size:16px;width:18px;text-align:center}
+.nav-badge{margin-left:auto;font-size:10px;background:var(--accent);color:#fff;padding:1px 6px;border-radius:20px;font-weight:600}
+.sidebar-footer{padding:12px 8px;border-top:1px solid var(--border)}
+.user-pill{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:var(--surface2)}
+.avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--purple));display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff}
+.user-name{font-size:12px;font-weight:500}
+.user-sub{font-size:10px;color:var(--muted)}
+.streak{margin-left:auto;font-size:11px;color:var(--accent);font-weight:600}
+
+/* PAGES */
+.page{display:none;padding:24px}
+.page.active{display:block}
+
+/* HEADER */
+.page-header{margin-bottom:24px}
+.page-title{font-size:22px;font-weight:700;margin-bottom:4px}
+.page-sub{font-size:13px;color:var(--muted)}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px}
+.card-sm{padding:12px}
+
+/* STAT GRID */
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px}
+.stat-val{font-size:24px;font-weight:700;font-family:var(--mono)}
+.stat-label{font-size:11px;color:var(--muted);margin-top:2px}
+.stat-change{font-size:11px;margin-top:6px}
+.up{color:var(--green)} .down{color:var(--red)}
+
+/* DSA TRACKER */
+.topic-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.topic-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;cursor:pointer;transition:border-color 0.15s}
+.topic-card:hover{border-color:var(--border2)}
+.topic-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.topic-name{font-size:13px;font-weight:600}
+.topic-count{font-size:11px;color:var(--muted);font-family:var(--mono)}
+.progress-bar{height:4px;background:var(--surface3);border-radius:99px;overflow:hidden}
+.progress-fill{height:100%;border-radius:99px;transition:width 0.5s ease}
+.topic-tags{display:flex;gap:4px;margin-top:8px;flex-wrap:wrap}
+.chip{font-size:10px;padding:2px 7px;border-radius:20px;border:1px solid}
+.chip-green{color:var(--green);border-color:rgba(34,197,94,0.25);background:var(--green-dim)}
+.chip-blue{color:var(--blue);border-color:rgba(59,130,246,0.25);background:var(--blue-dim)}
+.chip-red{color:var(--red);border-color:rgba(239,68,68,0.25);background:var(--red-dim)}
+.chip-yellow{color:var(--yellow);border-color:rgba(234,179,8,0.25);background:var(--yellow-dim)}
+.chip-purple{color:var(--purple);border-color:rgba(168,85,247,0.25);background:var(--purple-dim)}
+.chip-orange{color:var(--accent);border-color:rgba(249,115,22,0.25);background:var(--accent-dim)}
+
+/* AI CHAT */
+.chat-container{display:flex;flex-direction:column;height:520px}
+.chat-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
+.msg{display:flex;gap:10px;max-width:85%}
+.msg.user{align-self:flex-end;flex-direction:row-reverse}
+.msg-avatar{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.ai-av{background:var(--accent-dim);color:var(--accent);border:1px solid rgba(249,115,22,0.3)}
+.user-av{background:var(--blue-dim);color:var(--blue);border:1px solid rgba(59,130,246,0.3)}
+.msg-bubble{padding:10px 14px;border-radius:12px;font-size:13px;line-height:1.6}
+.ai-bubble{background:var(--surface2);border:1px solid var(--border);color:var(--text)}
+.user-bubble{background:var(--accent-dim);border:1px solid rgba(249,115,22,0.2);color:var(--text)}
+.msg-code{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px;font-family:var(--mono);font-size:11px;margin-top:8px;color:#7dd3fc;overflow-x:auto}
+.chat-input-area{padding:12px;border-top:1px solid var(--border);display:flex;gap:8px}
+.chat-input{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:13px;color:var(--text);font-family:var(--sans);outline:none;resize:none}
+.chat-input:focus{border-color:rgba(249,115,22,0.4)}
+.send-btn{background:var(--accent);border:none;border-radius:8px;padding:0 14px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:opacity 0.15s}
+.send-btn:hover{opacity:0.85}
+.typing{display:flex;gap:4px;align-items:center;padding:4px 0}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:bounce 1.2s infinite}
+.dot:nth-child(2){animation-delay:0.2s}
+.dot:nth-child(3){animation-delay:0.4s}
+@keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
+.quick-chips{display:flex;gap:6px;flex-wrap:wrap;padding:8px 12px 0}
+.q-chip{font-size:11px;padding:4px 10px;border-radius:20px;border:1px solid var(--border2);color:var(--muted);cursor:pointer;background:var(--surface2);transition:all 0.15s;white-space:nowrap}
+.q-chip:hover{border-color:rgba(249,115,22,0.4);color:var(--accent);background:var(--accent-dim)}
+
+/* MOCK INTERVIEW */
+.interview-setup{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.select-group label{font-size:12px;color:var(--muted);margin-bottom:6px;display:block}
+.sel{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:13px;color:var(--text);font-family:var(--sans);outline:none;cursor:pointer}
+.sel:focus{border-color:rgba(249,115,22,0.4)}
+.start-btn{background:var(--accent);border:none;border-radius:10px;padding:11px 24px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--sans);width:100%;transition:opacity 0.15s;margin-bottom:16px}
+.start-btn:hover{opacity:0.85}
+.question-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:14px}
+.q-meta{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+.q-num{font-size:11px;color:var(--muted);font-family:var(--mono)}
+.q-diff{font-size:10px;padding:2px 8px;border-radius:20px}
+.q-text{font-size:14px;line-height:1.7;color:var(--text)}
+.answer-area{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px;font-size:13px;color:var(--text);font-family:var(--sans);resize:vertical;min-height:100px;outline:none;margin-top:12px}
+.answer-area:focus{border-color:rgba(249,115,22,0.4)}
+.feedback-box{background:var(--green-dim);border:1px solid rgba(34,197,94,0.25);border-radius:10px;padding:14px;margin-top:12px}
+.feedback-title{font-size:12px;font-weight:600;color:var(--green);margin-bottom:6px}
+.feedback-text{font-size:12px;color:var(--muted);line-height:1.7}
+
+/* RESUME */
+.upload-zone{border:2px dashed var(--border2);border-radius:12px;padding:40px;text-align:center;cursor:pointer;transition:all 0.2s;margin-bottom:16px}
+.upload-zone:hover{border-color:rgba(249,115,22,0.4);background:var(--accent-dim)}
+.upload-icon{font-size:36px;margin-bottom:8px}
+.upload-title{font-size:14px;font-weight:600;margin-bottom:4px}
+.upload-sub{font-size:12px;color:var(--muted)}
+.score-ring-wrap{display:flex;justify-content:center;margin:20px 0}
+.score-ring{width:100px;height:100px;border-radius:50%;background:conic-gradient(var(--green) 0deg 288deg,var(--surface3) 288deg 360deg);display:flex;align-items:center;justify-content:center;position:relative}
+.score-ring::before{content:'';position:absolute;width:78px;height:78px;border-radius:50%;background:var(--surface)}
+.score-val{position:relative;font-size:22px;font-weight:700;font-family:var(--mono);color:var(--green)}
+.resume-feedback{display:grid;gap:10px}
+.rf-item{display:flex;gap:10px;align-items:flex-start;padding:12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border)}
+.rf-icon{font-size:16px;margin-top:1px}
+.rf-title{font-size:12px;font-weight:600;margin-bottom:2px}
+.rf-desc{font-size:11px;color:var(--muted);line-height:1.5}
+
+/* CONTESTS */
+.contest-list{display:grid;gap:10px}
+.contest-item{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px;display:flex;align-items:center;gap:14px;transition:border-color 0.15s}
+.contest-item:hover{border-color:var(--border2)}
+.contest-platform{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;font-family:var(--mono);flex-shrink:0}
+.cf{background:#1a1a3a;color:#7b93ff}
+.lc{background:#1a2a1a;color:#ffa500}
+.cc{background:#2a1a1a;color:#ff6b35}
+.contest-info{flex:1}
+.contest-name{font-size:13px;font-weight:600;margin-bottom:2px}
+.contest-time{font-size:11px;color:var(--muted)}
+.contest-action{font-size:11px;padding:5px 12px;border-radius:20px;border:1px solid;cursor:pointer;font-family:var(--sans);font-weight:500;transition:all 0.15s;white-space:nowrap}
+.btn-live{border-color:rgba(34,197,94,0.4);color:var(--green);background:var(--green-dim)}
+.btn-upcoming{border-color:rgba(59,130,246,0.4);color:var(--blue);background:var(--blue-dim)}
+.btn-reg{border-color:rgba(249,115,22,0.4);color:var(--accent);background:var(--accent-dim)}
+
+/* DAILY CHALLENGE */
+.challenge-meta{display:flex;gap:8px;align-items:center;margin-bottom:16px}
+.diff-badge{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600}
+.easy{background:var(--green-dim);color:var(--green);border:1px solid rgba(34,197,94,0.3)}
+.medium{background:var(--yellow-dim);color:var(--yellow);border:1px solid rgba(234,179,8,0.3)}
+.hard{background:var(--red-dim);color:var(--red);border:1px solid rgba(239,68,68,0.3)}
+.challenge-title{font-size:18px;font-weight:700;margin-bottom:12px}
+.challenge-desc{font-size:13px;color:var(--muted);line-height:1.8;margin-bottom:16px}
+.code-editor{background:var(--bg);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.editor-bar{background:var(--surface2);padding:8px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border)}
+.editor-dot{width:10px;height:10px;border-radius:50%}
+.code-area{width:100%;background:transparent;border:none;padding:14px;font-family:var(--mono);font-size:12px;color:#7dd3fc;resize:none;min-height:200px;outline:none;line-height:1.8}
+.run-btn{background:var(--green);border:none;border-radius:8px;padding:9px 20px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:opacity 0.15s;margin-top:12px}
+.run-btn:hover{opacity:0.85}
+.output-box{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;margin-top:10px;font-family:var(--mono);font-size:11px;color:var(--green)}
+
+/* ANALYTICS */
+.analytics-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.heatmap{display:grid;grid-template-columns:repeat(26,1fr);gap:2px;margin-top:10px}
+.hm-cell{aspect-ratio:1;border-radius:2px;background:var(--surface3)}
+.hm-1{background:rgba(34,197,94,0.2)} .hm-2{background:rgba(34,197,94,0.4)}
+.hm-3{background:rgba(34,197,94,0.65)} .hm-4{background:rgba(34,197,94,0.9)}
+.bar-chart{display:flex;align-items:flex-end;gap:6px;height:80px;margin-top:12px}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.bar{width:100%;border-radius:4px 4px 0 0;background:var(--accent);transition:height 0.5s ease}
+.bar-label{font-size:9px;color:var(--muted);font-family:var(--mono)}
+.skill-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.skill-name{font-size:12px;width:90px;color:var(--muted)}
+.skill-bar{flex:1;height:6px;background:var(--surface3);border-radius:99px;overflow:hidden}
+.skill-fill{height:100%;border-radius:99px}
+.skill-pct{font-size:11px;font-family:var(--mono);color:var(--text);width:30px;text-align:right}
+
+/* LOADING */
+.ai-loading{display:none;align-items:center;gap:8px;font-size:12px;color:var(--muted);padding:8px 0}
+.ai-loading.show{display:flex}
+
+/* GRID HELPERS */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.mt{margin-top:16px}
+.section-title{font-size:14px;font-weight:600;margin-bottom:12px;color:var(--text)}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:99px}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-icon">CM</div>
+    <div><div class="logo-text">CodeMentor AI</div><div class="logo-sub">Interview Prep</div></div>
+  </div>
+  <nav class="nav">
+    <div class="nav-section">Main</div>
+    <div class="nav-item active" onclick="showPage('dashboard',this)"><span class="nav-icon">🏠</span>Dashboard</div>
+    <div class="nav-item" onclick="showPage('daily',this)"><span class="nav-icon">⚡</span>Daily Challenge<span class="nav-badge">NEW</span></div>
+
+    <div class="nav-section">Prepare</div>
+    <div class="nav-item" onclick="showPage('dsa',this)"><span class="nav-icon">📊</span>DSA Tracker</div>
+    <div class="nav-item" onclick="showPage('doubt',this)"><span class="nav-icon">🤖</span>AI Doubt Solver</div>
+    <div class="nav-item" onclick="showPage('interview',this)"><span class="nav-icon">🎯</span>Mock Interview</div>
+
+    <div class="nav-section">Tools</div>
+    <div class="nav-item" onclick="showPage('resume',this)"><span class="nav-icon">📄</span>Resume Analyzer</div>
+    <div class="nav-item" onclick="showPage('contests',this)"><span class="nav-icon">🏆</span>Contests</div>
+    <div class="nav-item" onclick="showPage('analytics',this)"><span class="nav-icon">📈</span>Analytics</div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-pill">
+      <div class="avatar">CS</div>
+      <div><div class="user-name">Chandan Samal</div><div class="user-sub">Pro Plan</div></div>
+      <div class="streak">🔥 12</div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+
+<!-- DASHBOARD -->
+<div class="page active" id="page-dashboard">
+  <div class="page-header">
+    <div class="page-title">Good morning, Chandan 👋</div>
+    <div class="page-sub">You're on a 12-day streak! Keep it up — interviews won't crack themselves.</div>
+  </div>
+  <div class="stat-grid">
+    <div class="stat"><div class="stat-val" style="color:var(--accent)">147</div><div class="stat-label">Problems Solved</div><div class="stat-change up">↑ 8 this week</div></div>
+    <div class="stat"><div class="stat-val" style="color:var(--green)">72%</div><div class="stat-label">Accuracy Rate</div><div class="stat-change up">↑ 3% vs last week</div></div>
+    <div class="stat"><div class="stat-val" style="color:var(--blue)">5</div><div class="stat-label">Mock Interviews</div><div class="stat-change up">↑ 2 this month</div></div>
+    <div class="stat"><div class="stat-val" style="color:var(--purple)">🔥12</div><div class="stat-label">Day Streak</div><div class="stat-change up">Personal best!</div></div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="section-title">Today's Plan</div>
+      <div style="display:grid;gap:8px">
+        <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);cursor:pointer" onclick="showPage('daily',document.querySelector('.nav-item:nth-child(3)'))">
+          <span style="font-size:18px">⚡</span>
+          <div><div style="font-size:13px;font-weight:500">Daily Challenge</div><div style="font-size:11px;color:var(--muted)">Two Sum variant · Medium</div></div>
+          <span class="chip chip-yellow" style="margin-left:auto">Pending</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);cursor:pointer" onclick="showPage('dsa',document.querySelectorAll('.nav-item')[4])">
+          <span style="font-size:18px">📊</span>
+          <div><div style="font-size:13px;font-weight:500">DSA: Dynamic Programming</div><div style="font-size:11px;color:var(--muted)">3 problems remaining</div></div>
+          <span class="chip chip-blue" style="margin-left:auto">In Progress</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);cursor:pointer" onclick="showPage('interview',document.querySelectorAll('.nav-item')[6])">
+          <span style="font-size:18px">🎯</span>
+          <div><div style="font-size:13px;font-weight:500">Mock Interview</div><div style="font-size:11px;color:var(--muted)">Scheduled · Google · System Design</div></div>
+          <span class="chip chip-green" style="margin-left:auto">Ready</span>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-title">Topic Progress</div>
+      <div class="skill-row"><div class="skill-name">Arrays</div><div class="skill-bar"><div class="skill-fill" style="width:90%;background:var(--green)"></div></div><div class="skill-pct">90%</div></div>
+      <div class="skill-row"><div class="skill-name">Trees</div><div class="skill-bar"><div class="skill-fill" style="width:74%;background:var(--blue)"></div></div><div class="skill-pct">74%</div></div>
+      <div class="skill-row"><div class="skill-name">Dynamic Prog.</div><div class="skill-bar"><div class="skill-fill" style="width:48%;background:var(--accent)"></div></div><div class="skill-pct">48%</div></div>
+      <div class="skill-row"><div class="skill-name">Graphs</div><div class="skill-bar"><div class="skill-fill" style="width:35%;background:var(--purple)"></div></div><div class="skill-pct">35%</div></div>
+      <div class="skill-row"><div class="skill-name">Backtracking</div><div class="skill-bar"><div class="skill-fill" style="width:22%;background:var(--red)"></div></div><div class="skill-pct">22%</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- DSA TRACKER -->
+<div class="page" id="page-dsa">
+  <div class="page-header">
+    <div class="page-title">DSA Sheet Tracker</div>
+    <div class="page-sub">450 curated problems across all major topics · 147 solved</div>
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+    <span class="chip chip-green" style="padding:5px 12px;cursor:pointer">All Topics</span>
+    <span class="chip chip-blue" style="padding:5px 12px;cursor:pointer">Easy</span>
+    <span class="chip chip-yellow" style="padding:5px 12px;cursor:pointer">Medium</span>
+    <span class="chip chip-red" style="padding:5px 12px;cursor:pointer">Hard</span>
+  </div>
+  <div class="topic-grid">
+    <div class="topic-card"><div class="topic-header"><div class="topic-name">Arrays & Hashing</div><div class="topic-count">45/50</div></div><div class="progress-bar"><div class="progress-fill" style="width:90%;background:var(--green)"></div></div><div class="topic-tags"><span class="chip chip-green">Easy 20</span><span class="chip chip-yellow">Med 22</span><span class="chip chip-red">Hard 8</span></div></div>
+    <div class="topic-card"><div class="topic-header"><div class="topic-name">Binary Search</div><div class="topic-count">28/35</div></div><div class="progress-bar"><div class="progress-fill" style="width:80%;background:var(--blue)"></div></div><div class="topic-tags"><span class="chip chip-green">Easy 12</span><span class="chip chip-yellow">Med 16</span><span class="chip chip-red">Hard 7</span></div></div>
+    <div class="topic-card"><div class="topic-header"><div class="topic-name">Linked Lists</div><div class="topic-count">18/25</div></div><div class="progress-bar"><div class="progress-fill" style="width:72%;background:var(--accent)"></div></div><div class="topic-tags"><span class="chip chip-green">Easy 8</span><span class="chip chip-yellow">Med 12</span><span class="chip chip-red">Hard 5</span></div></div>
+    <div class="topic-card"><div class="topic-header"><div class="topic-name">Trees & BST</div><div class="topic-count">22/40</div></div><div class="progress-bar"><div class="progress-fill" style="width:55%;background:var(--purple)"></div></div><div class="topic-tags"><span class="chip chip-green">Easy 10</span><span class="chip chip-yellow">Med 18</span><span class="chip chip-red">Hard 12</span></div></div>
+    <div class="topic-card"><div class="topic-header"><div class="topic-name">Dynamic Programming</div><div class="topic-count">14/45</div></div><div class="progress-bar"><div class="progress-fill" style="width:31%;background:var(--yellow)"></div></div><div class="topic-tags"><span class="chip chip-green">Easy 4</span><span class="chip chip-yellow">Med 22</span><span class="chip chip-red">Hard 19</span></div></div>
+    <div class="topic-card"><div class="topic-header"><div class="topic-name">Graphs & BFS/DFS</div><div class="topic-count">10/40</div></div><div class="progress-bar"><div class="progress-fill" style="width:25%;background:var(--red)"></div></div><div class="topic-tags"><span class="chip chip-green">Easy 3</span><span class="chip chip-yellow">Med 20</span><span class="chip chip-red">Hard 17</span></div></div>
+    <div class="topic-card"><div class="topic-header"><div class="topic-name">Stack & Queue</div><div class="topic-count">16/20</div></div><div class="progress-bar"><div class="progress-fill" style="width:80%;background:var(--green)"></div></div><div class="topic-tags"><span class="chip chip-green">Easy 9</span><span class="chip chip-yellow">Med 8</span><span class="chip chip-red">Hard 3</span></div></div>
+    <div class="topic-card"><div class="topic-header"><div class="topic-name">Backtracking</div><div class="topic-count">5/20</div></div><div class="progress-bar"><div class="progress-fill" style="width:25%;background:var(--red)"></div></div><div class="topic-tags"><span class="chip chip-green">Easy 1</span><span class="chip chip-yellow">Med 8</span><span class="chip chip-red">Hard 11</span></div></div>
+  </div>
+</div>
+
+<!-- AI DOUBT SOLVER -->
+<div class="page" id="page-doubt">
+  <div class="page-header">
+    <div class="page-title">AI Doubt Solver</div>
+    <div class="page-sub">Powered by Claude · Ask anything about DSA, system design, or CS concepts</div>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <div class="quick-chips">
+      <span class="q-chip" onclick="askQuestion(this)">Explain Two Pointers</span>
+      <span class="q-chip" onclick="askQuestion(this)">Time complexity of BFS?</span>
+      <span class="q-chip" onclick="askQuestion(this)">When to use DP vs Greedy?</span>
+      <span class="q-chip" onclick="askQuestion(this)">Dijkstra vs Bellman-Ford</span>
+      <span class="q-chip" onclick="askQuestion(this)">Sliding window technique</span>
+    </div>
+    <div class="chat-container">
+      <div class="chat-messages" id="chat-messages">
+        <div class="msg">
+          <div class="msg-avatar ai-av">AI</div>
+          <div class="msg-bubble ai-bubble">Hey Chandan! 👋 I'm your AI doubt solver. Ask me anything about DSA, algorithms, system design, or coding concepts. I can explain with examples, pseudocode, or walk through problem-solving approaches step by step.</div>
+        </div>
+      </div>
+      <div class="chat-input-area">
+        <textarea class="chat-input" id="chat-input" rows="1" placeholder="Ask your doubt... e.g. 'How does quicksort work?'" onkeydown="handleKey(event)"></textarea>
+        <button class="send-btn" onclick="sendDoubt()">Send</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MOCK INTERVIEW -->
+<div class="page" id="page-interview">
+  <div class="page-header">
+    <div class="page-title">Mock Interview</div>
+    <div class="page-sub">AI-powered interview simulation · Get real-time feedback</div>
+  </div>
+  <div class="card">
+    <div class="interview-setup">
+      <div class="select-group"><label>Company</label><select class="sel"><option>Google</option><option>Amazon</option><option>Microsoft</option><option>Meta</option><option>Startup</option></select></div>
+      <div class="select-group"><label>Round Type</label><select class="sel"><option>DSA / Coding</option><option>System Design</option><option>Behavioral</option><option>Full Stack</option></select></div>
+      <div class="select-group"><label>Difficulty</label><select class="sel"><option>Easy</option><option selected>Medium</option><option>Hard</option></select></div>
+      <div class="select-group"><label>Duration</label><select class="sel"><option>30 min</option><option selected>45 min</option><option>60 min</option></select></div>
+    </div>
+    <button class="start-btn" onclick="startInterview()">🎯 Start AI Interview Session</button>
+    <div id="interview-content">
+      <div class="question-card">
+        <div class="q-meta"><span class="q-num">Q1 of 3</span><span class="diff-badge medium">Medium</span><span class="chip chip-blue">Arrays</span></div>
+        <div class="q-text">Given an array of integers <code style="background:var(--surface3);padding:1px 5px;border-radius:4px;font-family:var(--mono);font-size:12px">nums</code> and an integer <code style="background:var(--surface3);padding:1px 5px;border-radius:4px;font-family:var(--mono);font-size:12px">target</code>, return indices of the two numbers that add up to target. You may assume each input has exactly one solution.</div>
+        <textarea class="answer-area" id="interview-answer" placeholder="Think out loud — explain your approach, then write the code..."></textarea>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button class="send-btn" onclick="getInterviewFeedback()" style="background:var(--green)">✓ Submit Answer</button>
+          <button class="send-btn" onclick="getHint()" style="background:var(--surface3);color:var(--text)">💡 Get Hint</button>
+        </div>
+        <div class="feedback-box" id="interview-feedback" style="display:none"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RESUME ANALYZER -->
+<div class="page" id="page-resume">
+  <div class="page-header">
+    <div class="page-title">AI Resume Analyzer</div>
+    <div class="page-sub">Get ATS score, AI feedback, and suggestions to land more interviews</div>
+  </div>
+  <div class="g2">
+    <div>
+      <div class="upload-zone" onclick="analyzeResume()" id="upload-zone">
+        <div class="upload-icon">📄</div>
+        <div class="upload-title">Drop your resume here</div>
+        <div class="upload-sub">PDF or DOCX · Click to analyze with AI</div>
+      </div>
+      <div id="resume-results" style="display:none">
+        <div class="section-title">ATS Score</div>
+        <div class="score-ring-wrap"><div class="score-ring"><div class="score-val">80</div></div></div>
+        <div style="text-align:center;font-size:12px;color:var(--green);margin-bottom:16px;font-weight:600">Good · Above average</div>
+      </div>
+    </div>
+    <div>
+      <div class="section-title">AI Feedback</div>
+      <div class="resume-feedback" id="resume-feedback">
+        <div class="rf-item" style="border-color:rgba(34,197,94,0.2);background:var(--green-dim)"><div class="rf-icon">✅</div><div><div class="rf-title" style="color:var(--green)">Strong Technical Skills</div><div class="rf-desc">TensorFlow, PyTorch, LangChain keywords detected. Good ATS optimization for AI/ML roles.</div></div></div>
+        <div class="rf-item" style="border-color:rgba(234,179,8,0.2);background:var(--yellow-dim)"><div class="rf-icon">⚠️</div><div><div class="rf-title" style="color:var(--yellow)">Quantify Achievements</div><div class="rf-desc">Add metrics to all 3 projects. "Improved performance" → "Reduced latency by 40ms (23%)"</div></div></div>
+        <div class="rf-item" style="border-color:rgba(239,68,68,0.2);background:var(--red-dim)"><div class="rf-icon">❌</div><div><div class="rf-title" style="color:var(--red)">Missing LinkedIn URL</div><div class="rf-desc">Add your LinkedIn profile URL to increase callback rates by up to 30%.</div></div></div>
+        <div class="rf-item"><div class="rf-icon">💡</div><div><div class="rf-title">Add a Projects Section Header</div><div class="rf-desc">Make GitHub links clickable and add a live demo URL for each project.</div></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="card mt">
+    <div class="section-title">AI Improvement Suggestions</div>
+    <div id="resume-ai-suggestions" style="font-size:13px;color:var(--muted);line-height:1.8">
+      Click "Analyze with AI" above to get personalized suggestions for your resume tailored to AI/ML roles at top companies.
+    </div>
+    <button class="send-btn" onclick="getResumeSuggestions()" style="margin-top:12px">🤖 Get AI Suggestions for AI/ML Roles</button>
+  </div>
+</div>
+
+<!-- CONTESTS -->
+<div class="page" id="page-contests">
+  <div class="page-header">
+    <div class="page-title">Coding Contests</div>
+    <div class="page-sub">Live, upcoming, and past contests across platforms</div>
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:16px">
+    <span class="chip chip-green" style="padding:5px 12px;cursor:pointer">🟢 Live (2)</span>
+    <span class="chip chip-blue" style="padding:5px 12px;cursor:pointer">🔵 Upcoming (5)</span>
+    <span class="chip chip-orange" style="padding:5px 12px;cursor:pointer">All Platforms</span>
+  </div>
+  <div class="contest-list">
+    <div class="contest-item"><div class="contest-platform cf">CF</div><div class="contest-info"><div class="contest-name">Codeforces Round #942 (Div. 2)</div><div class="contest-time">🟢 Live now · Ends in 1h 24m</div></div><button class="contest-action btn-live">Join Live</button></div>
+    <div class="contest-item"><div class="contest-platform lc">LC</div><div class="contest-info"><div class="contest-name">LeetCode Weekly Contest 398</div><div class="contest-time">🟢 Live now · Ends in 0h 52m</div></div><button class="contest-action btn-live">Join Live</button></div>
+    <div class="contest-item"><div class="contest-platform lc">LC</div><div class="contest-info"><div class="contest-name">LeetCode Biweekly Contest 131</div><div class="contest-time">📅 Tomorrow · 8:00 AM IST</div></div><button class="contest-action btn-upcoming">Set Reminder</button></div>
+    <div class="contest-item"><div class="contest-platform cf">CF</div><div class="contest-info"><div class="contest-name">Codeforces Round #943 (Div. 1)</div><div class="contest-time">📅 May 27 · 10:30 PM IST</div></div><button class="contest-action btn-upcoming">Set Reminder</button></div>
+    <div class="contest-item"><div class="contest-platform cc">CC</div><div class="contest-info"><div class="contest-name">CodeChef Starters 137</div><div class="contest-time">📅 May 29 · 8:00 PM IST</div></div><button class="contest-action btn-reg">Register</button></div>
+    <div class="contest-item"><div class="contest-platform lc">LC</div><div class="contest-info"><div class="contest-name">Google Kick Start 2025 Round A</div><div class="contest-time">📅 June 1 · 2:00 PM IST</div></div><button class="contest-action btn-reg">Register</button></div>
+  </div>
+</div>
+
+<!-- DAILY CHALLENGE -->
+<div class="page" id="page-daily">
+  <div class="page-header">
+    <div class="page-title">Daily Challenge</div>
+    <div class="page-sub">May 25, 2025 · Complete to extend your streak 🔥</div>
+  </div>
+  <div class="g2">
+    <div>
+      <div class="card">
+        <div class="challenge-meta"><span class="diff-badge medium">Medium</span><span class="chip chip-blue">Arrays</span><span class="chip chip-orange">Hash Map</span></div>
+        <div class="challenge-title">3Sum Closest</div>
+        <div class="challenge-desc">Given an integer array nums of length n and an integer target, find three integers in nums such that the sum is closest to target. Return the sum of the three integers.</div>
+        <div class="code-editor">
+          <div class="editor-bar"><div class="editor-dot" style="background:#ff5f57"></div><div class="editor-dot" style="background:#ffbd2e"></div><div class="editor-dot" style="background:#28ca41"></div><span style="font-size:11px;color:var(--muted);margin-left:8px">solution.py</span></div>
+          <textarea class="code-area" id="daily-code">def threeSumClosest(nums, target):
+    nums.sort()
+    closest = float('inf')
+    
+    for i in range(len(nums) - 2):
+        left, right = i + 1, len(nums) - 1
+        while left < right:
+            total = nums[i] + nums[left] + nums[right]
+            # Update closest if this sum is nearer
+            if abs(total - target) < abs(closest - target):
+                closest = total
+            if total < target:
+                left += 1
+            elif total > target:
+                right -= 1
+            else:
+                return total
+    return closest</textarea>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button class="run-btn" onclick="runCode()">▶ Run Code</button>
+          <button class="run-btn" onclick="getAIHelp()" style="background:var(--accent)">🤖 AI Explain</button>
+        </div>
+        <div class="output-box" id="code-output" style="display:none"></div>
+      </div>
+    </div>
+    <div>
+      <div class="card card-sm" style="margin-bottom:12px">
+        <div class="section-title">Test Cases</div>
+        <div style="display:grid;gap:6px">
+          <div style="background:var(--surface2);border-radius:6px;padding:8px;font-family:var(--mono);font-size:11px"><span style="color:var(--muted)">Input: </span><span style="color:#7dd3fc">[-1,2,1,-4], 1</span><br><span style="color:var(--muted)">Output: </span><span style="color:var(--green)">2</span></div>
+          <div style="background:var(--surface2);border-radius:6px;padding:8px;font-family:var(--mono);font-size:11px"><span style="color:var(--muted)">Input: </span><span style="color:#7dd3fc">[0,0,0], 1</span><br><span style="color:var(--muted)">Output: </span><span style="color:var(--green)">0</span></div>
+        </div>
+      </div>
+      <div class="card card-sm" style="margin-bottom:12px">
+        <div class="section-title">Hints</div>
+        <div id="hints-area" style="font-size:12px;color:var(--muted);line-height:1.8">Click "AI Explain" to get step-by-step hints without spoiling the solution.</div>
+      </div>
+      <div class="card card-sm">
+        <div class="section-title">Stats</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center">
+          <div><div style="font-size:18px;font-weight:700;color:var(--accent);font-family:var(--mono)">47%</div><div style="font-size:10px;color:var(--muted)">Acceptance</div></div>
+          <div><div style="font-size:18px;font-weight:700;color:var(--blue);font-family:var(--mono)">12K</div><div style="font-size:10px;color:var(--muted)">Submissions</div></div>
+          <div><div style="font-size:18px;font-weight:700;color:var(--green);font-family:var(--mono)">O(n²)</div><div style="font-size:10px;color:var(--muted)">Optimal</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ANALYTICS -->
+<div class="page" id="page-analytics">
+  <div class="page-header">
+    <div class="page-title">Progress Analytics</div>
+    <div class="page-sub">Topic-wise breakdown · Activity heatmap · Performance trends</div>
+  </div>
+  <div class="stat-grid">
+    <div class="stat"><div class="stat-val" style="color:var(--accent)">147</div><div class="stat-label">Total Solved</div></div>
+    <div class="stat"><div class="stat-val" style="color:var(--green)">58</div><div class="stat-label">Easy</div></div>
+    <div class="stat"><div class="stat-val" style="color:var(--yellow)">71</div><div class="stat-label">Medium</div></div>
+    <div class="stat"><div class="stat-val" style="color:var(--red)">18</div><div class="stat-label">Hard</div></div>
+  </div>
+  <div class="analytics-grid">
+    <div class="card">
+      <div class="section-title">Activity Heatmap (Last 6 months)</div>
+      <div class="heatmap" id="heatmap"></div>
+      <div style="display:flex;gap:6px;align-items:center;margin-top:8px"><span style="font-size:10px;color:var(--muted)">Less</span><div style="width:10px;height:10px;border-radius:2px;background:var(--surface3)"></div><div class="hm-cell hm-1" style="width:10px;height:10px"></div><div class="hm-cell hm-2" style="width:10px;height:10px"></div><div class="hm-cell hm-3" style="width:10px;height:10px"></div><div class="hm-cell hm-4" style="width:10px;height:10px"></div><span style="font-size:10px;color:var(--muted)">More</span></div>
+    </div>
+    <div class="card">
+      <div class="section-title">Weekly Problems Solved</div>
+      <div class="bar-chart" id="bar-chart"></div>
+      <div style="display:flex;gap:4px;margin-top:4px" id="bar-labels"></div>
+    </div>
+  </div>
+  <div class="card mt">
+    <div class="section-title">Topic Mastery</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div>
+        <div class="skill-row"><div class="skill-name">Arrays</div><div class="skill-bar"><div class="skill-fill" style="width:90%;background:var(--green)"></div></div><div class="skill-pct">90%</div></div>
+        <div class="skill-row"><div class="skill-name">Binary Search</div><div class="skill-bar"><div class="skill-fill" style="width:80%;background:var(--blue)"></div></div><div class="skill-pct">80%</div></div>
+        <div class="skill-row"><div class="skill-name">Stack & Queue</div><div class="skill-bar"><div class="skill-fill" style="width:75%;background:var(--accent)"></div></div><div class="skill-pct">75%</div></div>
+        <div class="skill-row"><div class="skill-name">Linked Lists</div><div class="skill-bar"><div class="skill-fill" style="width:72%;background:var(--purple)"></div></div><div class="skill-pct">72%</div></div>
+      </div>
+      <div>
+        <div class="skill-row"><div class="skill-name">Trees</div><div class="skill-bar"><div class="skill-fill" style="width:55%;background:var(--blue)"></div></div><div class="skill-pct">55%</div></div>
+        <div class="skill-row"><div class="skill-name">DP</div><div class="skill-bar"><div class="skill-fill" style="width:31%;background:var(--yellow)"></div></div><div class="skill-pct">31%</div></div>
+        <div class="skill-row"><div class="skill-name">Graphs</div><div class="skill-bar"><div class="skill-fill" style="width:25%;background:var(--red)"></div></div><div class="skill-pct">25%</div></div>
+        <div class="skill-row"><div class="skill-name">Backtracking</div><div class="skill-bar"><div class="skill-fill" style="width:22%;background:var(--red)"></div></div><div class="skill-pct">22%</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+</div>
+
+<script>
+const API_KEY_NOTE = "Replace with your Anthropic API key";
+
+function showPage(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  if (el) el.classList.add('active');
+}
+
+async function callClaude(prompt, systemPrompt) {
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        system: systemPrompt || "You are CodeMentor AI, an expert coding interview preparation assistant. Be concise, practical, and encouraging.",
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+    const data = await res.json();
+    return data.content?.[0]?.text || "Sorry, I couldn't get a response.";
+  } catch (e) { return "Error connecting to AI. Please try again."; }
+}
+
+function appendMessage(role, content) {
+  const msgs = document.getElementById('chat-messages');
+  const isAI = role === 'ai';
+  const div = document.createElement('div');
+  div.className = 'msg' + (isAI ? '' : ' user');
+  const hasCode = content.includes('```');
+  let bubbleContent = content.replace(/```[\w]*\n?([\s\S]*?)```/g, (_, code) =>
+    `<div class="msg-code">${code.trim()}</div>`);
+  div.innerHTML = `<div class="msg-avatar ${isAI ? 'ai-av' : 'user-av'}">${isAI ? 'AI' : 'CS'}</div><div class="msg-bubble ${isAI ? 'ai-bubble' : 'user-bubble'}">${bubbleContent.replace(/\n/g,'<br>')}</div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function showTyping() {
+  const msgs = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'msg'; div.id = 'typing-indicator';
+  div.innerHTML = `<div class="msg-avatar ai-av">AI</div><div class="msg-bubble ai-bubble"><div class="typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>`;
+  msgs.appendChild(div); msgs.scrollTop = msgs.scrollHeight;
+}
+
+function removeTyping() { const t = document.getElementById('typing-indicator'); if (t) t.remove(); }
+
+async function sendDoubt() {
+  const input = document.getElementById('chat-input');
+  const q = input.value.trim(); if (!q) return;
+  appendMessage('user', q); input.value = '';
+  showTyping();
+  const ans = await callClaude(q, "You are CodeMentor AI, an expert in DSA, algorithms, system design, and coding interviews. Give clear, concise explanations with examples and code when helpful. Format code in triple backticks.");
+  removeTyping(); appendMessage('ai', ans);
+}
+
+function handleKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendDoubt(); } }
+
+function askQuestion(el) {
+  document.getElementById('chat-input').value = el.textContent;
+  sendDoubt();
+}
+
+async function getInterviewFeedback() {
+  const answer = document.getElementById('interview-answer').value.trim();
+  if (!answer) { alert('Please write your answer first!'); return; }
+  const fb = document.getElementById('interview-feedback');
+  fb.style.display = 'block'; fb.innerHTML = '<div style="color:var(--muted);font-size:12px">🤖 Analyzing your answer...</div>';
+  const feedback = await callClaude(
+    `Interview question: "Given an array nums and target, return indices of two numbers that add up to target." Candidate's answer: "${answer}". Provide brief feedback on: correctness, time/space complexity, code quality, and one improvement tip.`,
+    "You are a senior software engineer conducting coding interviews. Give concise, constructive feedback in 3-4 sentences."
+  );
+  fb.innerHTML = `<div class="feedback-title">✓ AI Feedback</div><div class="feedback-text">${feedback.replace(/\n/g,'<br>')}</div>`;
+}
+
+async function getHint() {
+  const hint = await callClaude(
+    "Give a subtle hint (not the full solution) for: Given array nums and target, return indices of two numbers that add up to target. One sentence only.",
+    "You are a coding mentor. Give hints that guide thinking without spoiling the answer."
+  );
+  document.getElementById('interview-feedback').style.display = 'block';
+  document.getElementById('interview-feedback').innerHTML = `<div class="feedback-title">💡 Hint</div><div class="feedback-text">${hint}</div>`;
+}
+
+function startInterview() {
+  appendMessage && null;
+  document.getElementById('interview-answer').value = '';
+  document.getElementById('interview-feedback').style.display = 'none';
+}
+
+async function getResumeSuggestions() {
+  const box = document.getElementById('resume-ai-suggestions');
+  box.textContent = '🤖 Generating personalized suggestions...'; box.style.color = 'var(--muted)';
+  const suggestions = await callClaude(
+    "Give 5 specific, actionable suggestions to improve a resume for an AI/ML engineering role. The candidate is a final-year CS student with projects in LangChain, TensorFlow, and NLP. Format as a numbered list.",
+    "You are an expert technical recruiter specializing in AI/ML roles at top tech companies. Give specific, actionable resume advice."
+  );
+  box.style.color = 'var(--text)'; box.innerHTML = suggestions.replace(/\n/g,'<br>');
+}
+
+function analyzeResume() {
+  document.getElementById('resume-results').style.display = 'block';
+}
+
+async function runCode() {
+  const out = document.getElementById('code-output');
+  out.style.display = 'block'; out.textContent = 'Running test cases...';
+  setTimeout(() => {
+    out.innerHTML = `<span style="color:var(--green)">✓ Test case 1 passed: Output = 2 (expected 2)</span>\n<span style="color:var(--green)">✓ Test case 2 passed: Output = 0 (expected 0)</span>\n<span style="color:var(--accent)">Runtime: 156ms · Memory: 17.2MB</span>`;
+  }, 800);
+}
+
+async function getAIHelp() {
+  const hints = document.getElementById('hints-area');
+  hints.textContent = '🤖 Getting AI explanation...'; hints.style.color = 'var(--muted)';
+  const explanation = await callClaude(
+    "Explain the approach to solve '3Sum Closest' problem. The current solution uses two-pointer technique. Explain why this approach works, its time complexity, and one key insight. Keep it under 100 words.",
+    "You are a DSA expert. Give clear, concise explanations that help students understand the intuition."
+  );
+  hints.style.color = 'var(--text)'; hints.innerHTML = explanation.replace(/\n/g,'<br>');
+}
+
+function buildHeatmap() {
+  const hm = document.getElementById('heatmap');
+  const levels = [0,0,1,0,2,1,3,0,1,4,2,0,3,1,2,4,3,1,0,2,3,4,2,1,3,0,4,2,1,3,2,4,1,0,3,2,4,1,2,3,0,1,4,2,3,1,4,2,3,4,1,2];
+  hm.innerHTML = levels.map(l => `<div class="hm-cell${l?' hm-'+l:''}"></div>`).join('');
+}
+
+function buildBarChart() {
+  const data = [5,8,12,7,15,10,18];
+  const labels = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const max = Math.max(...data);
+  const bc = document.getElementById('bar-chart');
+  const bl = document.getElementById('bar-labels');
+  bc.innerHTML = data.map((v,i) => `<div class="bar-col"><div class="bar" style="height:${(v/max)*70}px"></div></div>`).join('');
+  bl.innerHTML = labels.map(l => `<div style="flex:1;text-align:center;font-size:9px;color:var(--muted);font-family:var(--mono)">${l}</div>`).join('');
+}
+
+buildHeatmap(); buildBarChart();
+</script>
+</body>
+</html>
